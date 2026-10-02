@@ -278,7 +278,7 @@
                                                                            ],
                                                                  "path_regex":  "(test|tests|__tests__)/|\\.(test|spec)\\.[a-z]+$",
                                                                  "content_regex":  "process\\.env\\.PROD\\b",
-                                                                 "reason":  "테스트 코드에서 프로덕션 환경 접근 금지 (2025-08 사고 패턴)."
+                                                                 "reason":  "테스트 코드에서 프로덕션 환경 접근 금지."
                                                              },
                                                              {
                                                                  "id":  "unity-critical-dir-rm",
