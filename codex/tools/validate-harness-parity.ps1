@@ -42,6 +42,16 @@ function Test-Rule {
 try { $policy = Get-Content -Raw -LiteralPath $PolicyPath -Encoding UTF8 | ConvertFrom-Json }
 catch { Write-Output "FAIL 정책 JSON 파싱 실패: $($_.Exception.Message)"; exit 1 }
 if ($policy.schemaVersion -ne 2) { Write-Output "FAIL capability manifest는 schemaVersion 2가 필요합니다."; exit 1 }
+# 아무것도 검사하지 않거나 판정 기준이 빠진 manifest를 성공으로 보고하지 않는다.
+if (@($policy.capabilities).Count -eq 0) { Write-Output "FAIL capabilities가 비어 있습니다."; exit 1 }
+foreach ($item in @(@($policy.capabilities) + @($policy.conflictRules) | Where-Object { $null -ne $_ })) {
+    if ([string]::IsNullOrWhiteSpace($item.id) -or [string]::IsNullOrWhiteSpace($item.status)) {
+        Write-Output "FAIL manifest 항목에 id 또는 status가 없습니다."; exit 1
+    }
+}
+foreach ($conflict in @($policy.conflictRules | Where-Object { $null -ne $_ })) {
+    if (@($conflict.checks | Where-Object { $null -ne $_ }).Count -eq 0) { Write-Output "FAIL 충돌 규칙에 checks가 없습니다: $($conflict.id)"; exit 1 }
+}
 
 foreach ($capability in @($policy.capabilities)) {
     foreach ($platform in @("Codex", "Claude")) {

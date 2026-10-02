@@ -59,21 +59,29 @@ function Set-ManagedBlock {
 $policy = Get-Content -Raw -LiteralPath $Source -Encoding UTF8 | ConvertFrom-Json
 if ($policy.schemaVersion -notin @(1, 2)) { throw "지원하지 않는 하네스 정책 버전: $($policy.schemaVersion)" }
 
+# 일부 대상만 갱신되지 않도록 모든 대상의 결과를 먼저 계산·검증한 뒤 쓴다.
+$plans = @()
 foreach ($target in $policy.targets) {
     $targetPath = Resolve-HomePath $target.path
-    if (-not (Test-Path -LiteralPath $targetPath)) { throw "동기화 대상이 없습니다: $targetPath" }
+    if (-not (Test-Path -LiteralPath $targetPath -PathType Leaf)) { throw "동기화 대상이 없습니다: $targetPath" }
     $current = Get-Content -Raw -LiteralPath $targetPath -Encoding UTF8
-    $expected = Set-ManagedBlock -Content $current -Block (New-ManagedBlock -Policy $policy -Target $target)
-    $normalizedCurrent = $current.Replace("`r`n", "`n")
-
-    if ($Write) {
-        [System.IO.File]::WriteAllText($targetPath, $expected, [System.Text.UTF8Encoding]::new($true))
-        Write-Output "SYNC $($target.name): $targetPath"
+    $plans += [pscustomobject]@{
+        Name = $target.name
+        Path = $targetPath
+        Current = $current.Replace("`r`n", "`n")
+        Expected = Set-ManagedBlock -Content $current -Block (New-ManagedBlock -Policy $policy -Target $target)
     }
-    elseif ($normalizedCurrent -ne $expected) {
-        throw "하네스 규칙 드리프트 감지: $($target.name) ($targetPath)"
+}
+
+foreach ($plan in $plans) {
+    if ($Write) {
+        [System.IO.File]::WriteAllText($plan.Path, $plan.Expected, [System.Text.UTF8Encoding]::new($true))
+        Write-Output "SYNC $($plan.Name): $($plan.Path)"
+    }
+    elseif ($plan.Current -ne $plan.Expected) {
+        throw "하네스 규칙 드리프트 감지: $($plan.Name) ($($plan.Path))"
     }
     else {
-        Write-Output "PASS $($target.name): 관리 블록 일치"
+        Write-Output "PASS $($plan.Name): 관리 블록 일치"
     }
 }

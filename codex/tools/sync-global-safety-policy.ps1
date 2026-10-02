@@ -9,6 +9,9 @@
 
 $ErrorActionPreference = "Stop"
 
+# Check는 비변경 검사다. 쓰기 옵션과 함께 지정하면 아무것도 쓰기 전에 거부한다.
+if ($Check -and ($Write -or $ImportExisting)) { throw "-Check는 -Write 또는 -ImportExisting과 함께 사용할 수 없습니다." }
+
 function Read-CodexEntries([string]$Path) {
     $entries = @()
     $current = $null
@@ -86,6 +89,12 @@ if ($codexEntries.Count -eq 0 -or $claudePatterns.Count -eq 0) { throw "플랫�
 $codexOutput = New-CodexYaml $codexEntries
 $claudeOutput = New-ClaudeJson $claudePatterns
 if ($Write) {
+    # 한쪽 산출물만 갱신되지 않도록 모든 출력 경로를 쓰기 전에 확인한다.
+    foreach ($target in @($CodexTarget, $ClaudeTarget)) {
+        $parent = Split-Path -Parent ([System.IO.Path]::GetFullPath($target))
+        if (-not (Test-Path -LiteralPath $parent -PathType Container)) { throw "출력 폴더가 없습니다: $parent" }
+        if (Test-Path -LiteralPath $target -PathType Container) { throw "출력 경로가 폴더입니다: $target" }
+    }
     Write-Utf8Bom $CodexTarget $codexOutput
     # Node JSON.parse 호환을 위해 Claude 정책 JSON에는 BOM을 넣지 않는다.
     Write-Utf8NoBom $ClaudeTarget $claudeOutput
