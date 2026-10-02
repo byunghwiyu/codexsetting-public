@@ -1,0 +1,16 @@
+# 텍스트는 저장소에 LF로 보관하고 체크아웃 시에도 LF를 사용한다.
+* text=auto eol=lf
+
+# 기존 Windows 스크립트의 체크아웃 줄바꿈을 유지한다.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 바이너리는 줄바꿈 변환과 텍스트 비교에서 제외한다.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.pdf binary
+*.zip binary

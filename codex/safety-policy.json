@@ -1,0 +1,374 @@
+﻿{
+    "schemaVersion":  1,
+    "description":  "Codex와 Claude 글로벌 안전 정책의 단일 원본",
+    "platformPolicies":  {
+                             "codex":  {
+                                           "entries":  [
+                                                           {
+                                                               "pattern":  "git push --force",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "git",
+                                                                              "push",
+                                                                              "--force"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "강제 푸시 금지"
+                                                           },
+                                                           {
+                                                               "pattern":  "git push --force-with-lease",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "git",
+                                                                              "push",
+                                                                              "--force-with-lease"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "강제 푸시 계열 명령 금지"
+                                                           },
+                                                           {
+                                                               "pattern":  "git push -f",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "git",
+                                                                              "push",
+                                                                              "-f"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "강제 푸시 단축 옵션 금지"
+                                                           },
+                                                           {
+                                                               "pattern":  "git reset --hard",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "git",
+                                                                              "reset",
+                                                                              "--hard"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "작업 내용 손실 위험"
+                                                           },
+                                                           {
+                                                               "pattern":  "Remove-Item -Recurse",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "Remove-Item",
+                                                                              "-Recurse"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "PowerShell 재귀 삭제 위험"
+                                                           },
+                                                           {
+                                                               "pattern":  "Remove-Item -Recurse -Force",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "Remove-Item",
+                                                                              "-Recurse",
+                                                                              "-Force"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "PowerShell 재귀 강제 삭제 위험"
+                                                           },
+                                                           {
+                                                               "pattern":  "rm -rf",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "rm",
+                                                                              "-rf"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "재귀 강제 삭제 위험"
+                                                           },
+                                                           {
+                                                               "pattern":  "rm -fr",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "rm",
+                                                                              "-fr"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "재귀 강제 삭제 옵션 순서 변형"
+                                                           },
+                                                           {
+                                                               "pattern":  "rm --recursive --force",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "rm",
+                                                                              "--recursive",
+                                                                              "--force"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "재귀 강제 삭제 긴 옵션"
+                                                           },
+                                                           {
+                                                               "pattern":  "rd /s /q",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "rd",
+                                                                              "/s",
+                                                                              "/q"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "cmd 재귀 삭제 위험"
+                                                           },
+                                                           {
+                                                               "pattern":  "rmdir /s /q",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "rmdir",
+                                                                              "/s",
+                                                                              "/q"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "cmd 재귀 삭제 위험"
+                                                           },
+                                                           {
+                                                               "pattern":  "del /s /q",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "del",
+                                                                              "/s",
+                                                                              "/q"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "cmd 대량 파일 삭제 위험"
+                                                           },
+                                                           {
+                                                               "pattern":  "npm publish",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "npm",
+                                                                              "publish"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "패키지 배포는 명시 승인 필요"
+                                                           },
+                                                           {
+                                                               "pattern":  "pnpm publish",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "pnpm",
+                                                                              "publish"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "패키지 배포는 명시 승인 필요"
+                                                           },
+                                                           {
+                                                               "pattern":  "dotnet nuget push",
+                                                               "policy":  "forbidden",
+                                                               "tokens":  [
+                                                                              "dotnet",
+                                                                              "nuget",
+                                                                              "push"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "NuGet 배포는 명시 승인 필요"
+                                                           },
+                                                           {
+                                                               "pattern":  "psql",
+                                                               "policy":  "prompt",
+                                                               "tokens":  [
+                                                                              "psql"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "파이프로 파괴적 SQL이 전달될 수 있어 검토 필요"
+                                                           },
+                                                           {
+                                                               "pattern":  "mysql",
+                                                               "policy":  "prompt",
+                                                               "tokens":  [
+                                                                              "mysql"
+                                                                          ],
+                                                               "scope":  "**/*",
+                                                               "reason":  "파이프로 파괴적 SQL이 전달될 수 있어 검토 필요"
+                                                           },
+                                                           {
+                                                               "pattern":  "DROP TABLE",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/*",
+                                                               "reason":  "SQL 내용 검사 대상"
+                                                           },
+                                                           {
+                                                               "pattern":  "ASPNETCORE_ENVIRONMENT=Production",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/tests/**",
+                                                               "reason":  "테스트의 운영 환경 지정 검사 대상"
+                                                           },
+                                                           {
+                                                               "pattern":  "api_key",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/*",
+                                                               "reason":  "시크릿 검사 대상"
+                                                           },
+                                                           {
+                                                               "pattern":  "sk-",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/*",
+                                                               "reason":  "OpenAI 계열 API 키 검사 대상"
+                                                           },
+                                                           {
+                                                               "pattern":  "BEGIN PRIVATE KEY",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/*",
+                                                               "reason":  "개인키 검사 대상"
+                                                           },
+                                                           {
+                                                               "pattern":  "GITHUB_TOKEN=",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/*",
+                                                               "reason":  "GitHub 토큰 검사 대상"
+                                                           }
+                                                       ]
+                                       },
+                             "claude":  {
+                                            "patterns":  [
+                                                             {
+                                                                 "id":  "git-force-push",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "\\bgit(\\.exe)?\\s+push\\b.*(--force\\b|--force-with-lease\\b|\\s-f\\b)",
+                                                                 "reason":  "force push 금지 — 협업 브랜치 손실 위험. 시니어 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "git-reset-hard",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "\\bgit(\\.exe)?\\s+reset\\s+--hard\\b",
+                                                                 "reason":  "uncommitted 변경 손실 위험. 시니어 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "rm-rf",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "\\brm\\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r)\\b",
+                                                                 "reason":  "대량 삭제 — 명시 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "drop-table-cmd",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "\\bDROP\\s+TABLE\\b",
+                                                                 "flags":  "i",
+                                                                 "reason":  "운영 DB 데이터 손실 위험 (Bash 명령). 시니어 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "drop-table-code",
+                                                                 "tools":  [
+                                                                               "Write",
+                                                                               "Edit"
+                                                                           ],
+                                                                 "path_regex":  "\\.(sql|cs|ts|tsx|js|jsx|py|rb|go|java)$|migrations?/",
+                                                                 "content_regex":  "\\bDROP\\s+TABLE\\b",
+                                                                 "flags":  "i",
+                                                                 "reason":  "운영 DB 데이터 손실 위험 (코드/마이그레이션). 시니어 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "process-env-prod-in-tests",
+                                                                 "tools":  [
+                                                                               "Write",
+                                                                               "Edit"
+                                                                           ],
+                                                                 "path_regex":  "(test|tests|__tests__)/|\\.(test|spec)\\.[a-z]+$",
+                                                                 "content_regex":  "process\\.env\\.PROD\\b",
+                                                                 "reason":  "테스트 코드에서 프로덕션 환경 접근 금지 (2025-08 사고 패턴)."
+                                                             },
+                                                             {
+                                                                 "id":  "unity-critical-dir-rm",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "\\brm\\b.*\\b(Assets|ProjectSettings|Packages)\\b",
+                                                                 "reason":  "Unity 핵심 디렉토리 대량 변경 — 사전 계획 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "api-key-leak",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell",
+                                                                               "Write",
+                                                                               "Edit"
+                                                                           ],
+                                                                 "content_regex":  "(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|AIza[0-9A-Za-z_-]{30,}|xox[baprs]-[A-Za-z0-9-]{10,})",
+                                                                 "reason":  "API 키/토큰 출력·커밋 금지."
+                                                             },
+                                                             {
+                                                                 "id":  "sudo",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "(^|[;\u0026|]\\s*)sudo\\b",
+                                                                 "reason":  "관리자 권한 명령 — 명시 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "package-publish",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "\\b(npm|pnpm|yarn)\\s+publish\\b",
+                                                                 "reason":  "패키지 게시 — 명시 승인 필수. 잘못 게시 시 unpublish 시간제한·이름 점유 문제."
+                                                             },
+                                                             {
+                                                                 "id":  "gh-release-create",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "\\bgh\\s+release\\s+create\\b",
+                                                                 "reason":  "GitHub 릴리스 생성 — 공개 배포 행위. 명시 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "drop-db-cmd",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "\\bDROP\\s+(DATABASE|SCHEMA)\\b|\\bTRUNCATE\\s+(TABLE\\s+)?\\w",
+                                                                 "flags":  "i",
+                                                                 "reason":  "DB 파괴 명령 (Bash) — DROP TABLE보다 영향 큼. 시니어 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "drop-db-code",
+                                                                 "tools":  [
+                                                                               "Write",
+                                                                               "Edit"
+                                                                           ],
+                                                                 "path_regex":  "\\.(sql|cs|ts|tsx|js|jsx|py|rb|go|java)$|migrations?/",
+                                                                 "content_regex":  "\\bDROP\\s+(DATABASE|SCHEMA)\\b|\\bTRUNCATE\\s+(TABLE\\s+)?\\w",
+                                                                 "flags":  "i",
+                                                                 "reason":  "DB 파괴 SQL을 코드/마이그레이션에 작성 — 시니어 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "powershell-recursive-force-delete",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "\\b(remove-item|ri|rm|rmdir|rd|del|erase)\\b(?=[^|;]*\\s-r(?:ecurse)?\\b)(?=[^|;]*\\s-force\\b)",
+                                                                 "flags":  "i",
+                                                                 "reason":  "PowerShell 대량 강제 삭제 (-Recurse + -Force) — 명시 승인 필수."
+                                                             },
+                                                             {
+                                                                 "id":  "protected-path-write",
+                                                                 "tools":  [
+                                                                               "Bash",
+                                                                               "PowerShell"
+                                                                           ],
+                                                                 "command_regex":  "(\\b(Set-Content|Out-File|Add-Content|New-Item|Copy-Item|Move-Item|Remove-Item|sc|ni|cpi|mi)\\b|\u003e)[^|;]*\\b(Assets|ProjectSettings|Packages|deny-patterns\\.json|validate-deny\\.js|post_edit_build\\.js)\\b",
+                                                                 "flags":  "i",
+                                                                 "reason":  "보호 경로(Unity 핵심 디렉토리·가드 설정·훅 스크립트)에 대한 셸 경유 쓰기 — 명시 승인 필수. 도구 계층(Write/Edit)을 사용하세요."
+                                                             }
+                                                         ]
+                                        }
+                         }
+}

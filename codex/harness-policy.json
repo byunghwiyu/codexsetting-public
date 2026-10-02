@@ -1,0 +1,330 @@
+{
+  "schemaVersion": 2,
+  "common": {
+    "language": "항상 한국어로 대화한다.",
+    "planApproval": "읽기·조사·분석은 진행한다. 변경 작업은 계획과 성공 기준을 설명하고 승인받는다. 승인한 범위의 일반 편집·관련 오류 교정은 재승인 없이 진행한다. 승인 범위를 벗어나거나 저장 방식·공개 API·사용자 경험의 큰 결정이 필요하면 선택지와 추천 이유를 제시하고 확인받는다. 이 계약은 글로벌 문서의 포괄적인 작업 전 확인·가정 확인 문구를 구체화하며 승인 범위 해석에 우선한다.",
+    "destructiveApproval": "삭제·기존 내용의 전면 교체·운영 데이터 변경·결제·배포·강제 Git 작업은 대상과 영향을 명시해 승인받는다. 이미 동일 대상과 행위를 명시적으로 승인받았다면 반복 확인하지 않는다. 일반 편집은 전면 교체로 보지 않는다. 실행 정책의 차단은 대화상 승인으로 해제되지 않으며 우회하지 않는다.",
+    "phaseMaxFiles": 5,
+    "phaseApproval": "각 Phase 완료 후 검증 결과를 보고하고 다음 Phase 전에 명시적 승인을 받는다.",
+    "rubricRange": "비자명 작업은 착수 전에 Yes/No로 판정 가능한 성공 기준 3~7개를 선언한다.",
+    "rubricAxes": [
+      "의도 충족",
+      "완전성",
+      "정확성",
+      "정합성",
+      "외과성"
+    ],
+    "completion": "완료 보고 전 기준별 Yes/No 판정과 검증 근거를 확인한다."
+  },
+  "targets": [
+    {
+      "name": "Codex",
+      "path": "~/.codex/AGENTS.md",
+      "overrides": [
+        "서브에이전트 사용은 활성 런타임 정책과 사용자가 허용한 범위 안에서만 수행한다.",
+        "Codex 위험 명령의 실제 차단 정책은 deny-patterns.yaml에서 생성한 rules/deny.rules를 사용한다."
+      ]
+    },
+    {
+      "name": "Claude",
+      "path": "~/.claude/rules/06-rubric.md",
+      "overrides": [
+        "Claude 전용 훅과 승인된 위임 조건은 rules/02-execution.md와 rules/05-ai-delegation.md에서 관리한다.",
+        "Claude 위험 명령 차단은 Claude 설정과 훅에서 관리하며 Codex deny.rules를 실행 정책으로 간주하지 않는다."
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "korean-language",
+      "status": "required",
+      "implementations": {
+        "Codex": [
+          {
+            "path": "~/.codex/AGENTS.md",
+            "allOf": [
+              "항상 한국어"
+            ]
+          }
+        ],
+        "Claude": [
+          {
+            "path": "~/.claude/rules/01-basic.md",
+            "allOf": [
+              "항상 **한국어**"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "plan-and-approval",
+      "status": "required",
+      "implementations": {
+        "Codex": [
+          {
+            "path": "~/.codex/AGENTS.md",
+            "allOf": [
+              "계획을 먼저 설명",
+              "확인 후 진행",
+              "재승인 없이 진행",
+              "선택지와 추천 이유",
+              "대상과 영향을 명시"
+            ]
+          }
+        ],
+        "Claude": [
+          {
+            "path": "~/.claude/rules/06-rubric.md",
+            "allOf": [
+              "계획과 성공 기준",
+              "재승인 없이 진행",
+              "선택지와 추천 이유",
+              "대상과 영향을 명시"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "phase-contract",
+      "status": "required",
+      "implementations": {
+        "Codex": [
+          {
+            "path": "~/.codex/AGENTS.md",
+            "allOf": [
+              "1 Phase = 최대 5파일",
+              "명시적 승인"
+            ]
+          }
+        ],
+        "Claude": [
+          {
+            "path": "~/.claude/rules/02-execution.md",
+            "allOf": [
+              "1 Phase = 최대 5파일",
+              "명시적 승인"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "rubric",
+      "status": "required",
+      "implementations": {
+        "Codex": [
+          {
+            "path": "~/.codex/AGENTS.md",
+            "allOf": [
+              "총 3~7개",
+              "의도 충족",
+              "외과성"
+            ]
+          }
+        ],
+        "Claude": [
+          {
+            "path": "~/.claude/rules/06-rubric.md",
+            "allOf": [
+              "총 3~7개",
+              "의도 충족",
+              "외과성"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "implementation-notes",
+      "status": "required",
+      "implementations": {
+        "Codex": [
+          {
+            "path": "~/.codex/AGENTS.md",
+            "allOf": [
+              "Implementation Notes 운영 규칙",
+              "설계 결정",
+              "트레이드오프"
+            ]
+          }
+        ],
+        "Claude": [
+          {
+            "path": "~/.claude/rules/02-execution.md",
+            "allOf": [
+              "implementation-notes",
+              "설계 결정",
+              "트레이드오프"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "command-and-content-guards",
+      "status": "required",
+      "implementations": {
+        "Codex": [
+          {
+            "path": "~/.codex/rules/deny.rules",
+            "allOf": [
+              "decision=\"forbidden\"",
+              "--force-with-lease"
+            ]
+          },
+          {
+            "path": "~/.codex/tools/scan-content-policy.ps1",
+            "allOf": [
+              "Policy -ne \"scan\"",
+              "OrdinalIgnoreCase"
+            ]
+          },
+          {
+            "path": "~/.codex/hooks.json",
+            "allOf": [
+              "PreToolUse",
+              "apply_patch",
+              "pre_tool_use_content_guard.ps1"
+            ]
+          },
+          {
+            "path": "~/.codex/hooks/pre_tool_use_content_guard.ps1",
+            "allOf": [
+              "Console]::In.ReadToEnd",
+              "exit 2"
+            ]
+          }
+        ],
+        "Claude": [
+          {
+            "path": "~/.claude/hooks/validate-deny.js",
+            "allOf": [
+              "process.exit(2)",
+              "patterns 배열"
+            ]
+          },
+          {
+            "path": "~/.claude/settings.json",
+            "allOf": [
+              "validate-deny.js"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "verification-profiles",
+      "status": "required",
+      "implementations": {
+        "Codex": [
+          {
+            "path": "~/.codex/AGENTS.md",
+            "allOf": [
+              "Node/TS",
+              "Python",
+              "마크다운/설정"
+            ]
+          }
+        ],
+        "Claude": [
+          {
+            "path": "~/.claude/rules/02-execution.md",
+            "allOf": [
+              "Node/TS",
+              "Python",
+              "마크다운/설정"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "automation-creation-approval",
+      "status": "required",
+      "implementations": {
+        "Codex": [
+          {
+            "path": "~/.codex/AGENTS.md",
+            "allOf": [
+              "스킬·에이전트·자동화 신설 전 승인"
+            ]
+          }
+        ],
+        "Claude": [
+          {
+            "path": "~/.claude/rules/05-ai-delegation.md",
+            "allOf": [
+              "스킬·에이전트·자동화 신설 전 승인"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "conflictRules": [
+    {
+      "id": "obsolete-global-workflow",
+      "status": "required",
+      "checks": [
+        {
+          "path": "~/.codex/AGENTS.md",
+          "noneOf": [
+            "/codex:rescue",
+            "/codex:review",
+            "미사용 import/변수/디버그 로그 제거를",
+            "아무것도 출력하지 않는 것이 정상",
+            "1파일 수정·단순 질문에는 미적용",
+            "200줄로 쓴 걸 50줄로",
+            "위험 작업 패턴은 `~/.codex/deny-patterns.yaml`에 누적"
+          ]
+        },
+        {
+          "path": "~/.claude/rules/02-execution.md",
+          "noneOf": [
+            "미사용 import/변수/디버그 로그 제거를",
+            "아무것도 출력하지 않는 것이 정상",
+            "포매팅 수정은 로직 변경 없으므로 승인 없이"
+          ]
+        },
+        {
+          "path": "~/.claude/rules/06-rubric.md",
+          "noneOf": [
+            "1파일 수정·단순 질문에는 미적용"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "automatic-subagent-without-scope",
+      "status": "required",
+      "checks": [
+        {
+          "path": "~/.codex/AGENTS.md",
+          "noneOf": [
+            "5파일 초과 독립 작업은 서브에이전트 병렬 실행"
+          ]
+        },
+        {
+          "path": "~/.claude/rules/02-execution.md",
+          "noneOf": [
+            "5파일 초과 독립 작업은 서브에이전트 병렬 실행"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "unity-domain-rule-in-global",
+      "status": "required",
+      "checks": [
+        {
+          "path": "~/.claude/rules/03-quality.md",
+          "noneOf": [
+            "게임플레이/밸런스 수치"
+          ]
+        }
+      ]
+    }
+  ]
+}

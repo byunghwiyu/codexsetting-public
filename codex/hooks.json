@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^(Bash|apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -File \"$HOME/.codex/hooks/pre_tool_use_content_guard.ps1\"",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& (Join-Path $env:USERPROFILE '.codex/hooks/pre_tool_use_content_guard.ps1')\"",
+            "timeout": 30,
+            "statusMessage": "위험 콘텐츠 검사 중"
+          }
+        ]
+      }
+    ]
+  }
+}
