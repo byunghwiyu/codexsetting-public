@@ -91,7 +91,7 @@ try {
     [System.IO.File]::WriteAllText($fixtureProject, "<Project><Broken></Project>")
     [System.IO.File]::WriteAllText($fixtureSource, "public class Probe {}")
     $escapedSource = $fixtureSource.Replace('\', '\\')
-    Assert-Exit "Claude 실제 빌드 실패 차단" (Invoke-NodeHook $buildHook "{`"tool_name`":`"Edit`",`"tool_input`":{`"file_path`":`"$escapedSource`"}}") 1
+    Assert-Exit "Claude 실제 빌드 실패 피드백" (Invoke-NodeHook $buildHook "{`"tool_name`":`"Edit`",`"tool_input`":{`"file_path`":`"$escapedSource`"}}") 2
 }
 finally {
     # 임시 산출물은 진단을 위해 보존한다. 자동 삭제하지 않는다.
@@ -113,6 +113,21 @@ finally {
     # 임시 산출물은 진단을 위해 보존한다. 자동 삭제하지 않는다.
 }
 
+$formatDirectory = Join-Path $temporaryRoot "codex-harness-hook-format-$fixtureId"
+$formatProject = Join-Path $formatDirectory "Format.csproj"
+$formatSource = Join-Path $formatDirectory "Probe.cs"
+try {
+    New-Item -ItemType Directory -Path $formatDirectory -Force | Out-Null
+    [System.IO.File]::WriteAllText($formatProject, ('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>{0}</TargetFramework></PropertyGroup></Project>' -f $targetFramework))
+    # 빌드는 통과하지만 공백 규칙을 위반하는 소스로 포맷 실패 경로를 검사한다.
+    [System.IO.File]::WriteAllText($formatSource, "public   class Probe{ }")
+    $escapedSource = $formatSource.Replace('\', '\\')
+    Assert-Exit "Claude 포맷 실패 피드백" (Invoke-NodeHook $buildHook "{`"tool_name`":`"Edit`",`"tool_input`":{`"file_path`":`"$escapedSource`"}}") 2
+}
+finally {
+    # 임시 산출물은 진단을 위해 보존한다. 자동 삭제하지 않는다.
+}
+
 $ambiguousDirectory = Join-Path $temporaryRoot "codex-harness-hook-ambiguous-$fixtureId"
 $ambiguousProjects = @(
     (Join-Path $ambiguousDirectory "Alpha.csproj"),
@@ -127,7 +142,7 @@ try {
     [System.IO.File]::WriteAllText($ambiguousSource, "public class Probe { }")
     $escapedSource = $ambiguousSource.Replace('\', '\\')
     $ambiguousResult = Invoke-NodeHook $buildHook "{`"tool_name`":`"Edit`",`"tool_input`":{`"file_path`":`"$escapedSource`"}}"
-    Assert-Exit "Claude 다중 프로젝트 모호성 차단" $ambiguousResult 1
+    Assert-Exit "Claude 다중 프로젝트 모호성 피드백" $ambiguousResult 2
     if (-not $ambiguousResult.Output.Contains("대상을 결정할 수 없음")) { $failures.Add("Claude 다중 프로젝트 모호성 사유 미보고") }
 }
 finally {
@@ -148,4 +163,4 @@ if ($failures.Count -gt 0) {
     foreach ($failure in $failures) { Write-Output "FAIL: $failure" }
     exit 1
 }
-Write-Output "PASS: Claude 훅 9건, Codex 콘텐츠 정책·PreToolUse 6건"
+Write-Output "PASS: Claude 훅 10건, Codex 콘텐츠 정책·PreToolUse 6건"
