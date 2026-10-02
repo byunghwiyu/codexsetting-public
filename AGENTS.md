@@ -157,7 +157,7 @@
 - using / namespace 선언
 - 문자열 리터럴 포함 여부
 - 재export / 배럴 파일 항목
-- Unity의 `SerializeField`, `Resources.Load`, 프리팹/씬 연결 영향 여부  ← 여기
+- Unity의 `SerializeField`, `Resources.Load`, 프리팹/씬 연결 영향 여부
 
 ## 응답 형식
 - 긴 설명보다 **핵심 요약 + 코드** 우선
