@@ -149,6 +149,43 @@ finally {
     # 임시 산출물은 진단을 위해 보존한다. 자동 삭제하지 않는다.
 }
 
+# 프로젝트 탐색 경계: Editor 전용 프로젝트, 작업 폴더 밖 상위 프로젝트, Editor 폴더 파일의 대상 선택을 확인한다.
+$validProject = ('<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>{0}</TargetFramework></PropertyGroup></Project>' -f $targetFramework)
+$boundaryRoot = Join-Path $temporaryRoot "codex-harness-hook-boundary-$fixtureId"
+$editorOnlyDirectory = Join-Path $boundaryRoot "editor-only"
+$outsideDirectory = Join-Path $boundaryRoot "outside"
+$outsideWorkspace = Join-Path $outsideDirectory "workspace"
+$unityDirectory = Join-Path $boundaryRoot "unity"
+try {
+    New-Item -ItemType Directory -Path $editorOnlyDirectory, $outsideWorkspace, (Join-Path $unityDirectory "Editor") -Force | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $editorOnlyDirectory "Tools.Editor.csproj"), $validProject)
+    [System.IO.File]::WriteAllText((Join-Path $editorOnlyDirectory "Probe.cs"), "public class Probe { }")
+    [System.IO.File]::WriteAllText((Join-Path $outsideDirectory "Broken.csproj"), "<Project><Broken></Project>")
+    [System.IO.File]::WriteAllText((Join-Path $outsideWorkspace "Probe.cs"), "public class Probe { }")
+    # 런타임 프로젝트는 깨진 미끼로 두어, 잘못 선택하면 빌드 실패로 드러나게 한다.
+    [System.IO.File]::WriteAllText((Join-Path $unityDirectory "Assembly-CSharp.csproj"), "<Project><Broken></Project>")
+    [System.IO.File]::WriteAllText((Join-Path $unityDirectory "Assembly-CSharp-Editor.csproj"), $validProject)
+    [System.IO.File]::WriteAllText((Join-Path $unityDirectory "Editor\Probe.cs"), "public class Probe { }")
+
+    $editorOnlyInput = @{ tool_name = 'Edit'; tool_input = @{ file_path = (Join-Path $editorOnlyDirectory "Probe.cs") }; cwd = $editorOnlyDirectory } | ConvertTo-Json -Compress
+    $editorOnlyResult = Invoke-NodeHook $buildHook $editorOnlyInput
+    Assert-Exit "Claude Editor 전용 프로젝트 빌드" $editorOnlyResult 0
+    if (-not $editorOnlyResult.Output.Contains("Tools.Editor.csproj")) { $failures.Add("Claude Editor 전용 프로젝트를 대상으로 선택하지 않음") }
+
+    $outsideInput = @{ tool_name = 'Edit'; tool_input = @{ file_path = (Join-Path $outsideWorkspace "Probe.cs") }; cwd = $outsideWorkspace } | ConvertTo-Json -Compress
+    $outsideResult = Invoke-NodeHook $buildHook $outsideInput
+    Assert-Exit "Claude 작업 폴더 밖 상위 프로젝트 제외" $outsideResult 0
+    if (-not $outsideResult.Output.Contains("건너뜀")) { $failures.Add("Claude 작업 폴더 밖 상위 프로젝트를 선택함") }
+
+    $unityInput = @{ tool_name = 'Edit'; tool_input = @{ file_path = (Join-Path $unityDirectory "Editor\Probe.cs") }; cwd = $unityDirectory } | ConvertTo-Json -Compress
+    $unityResult = Invoke-NodeHook $buildHook $unityInput
+    Assert-Exit "Claude Editor 폴더 파일의 Editor 프로젝트 선택" $unityResult 0
+    if (-not $unityResult.Output.Contains("Assembly-CSharp-Editor.csproj")) { $failures.Add("Claude Editor 폴더 파일에 Editor 프로젝트를 선택하지 않음") }
+}
+finally {
+    # 임시 산출물은 진단을 위해 보존한다. 자동 삭제하지 않는다.
+}
+
 & $scanTool -Content "public const string Name = 'safe';" *> $null
 if ($LASTEXITCODE -ne 0) { $failures.Add("Codex 안전 콘텐츠 오탐") }
 & $scanTool -Content "DROP TABLE users;" *> $null
@@ -163,4 +200,4 @@ if ($failures.Count -gt 0) {
     foreach ($failure in $failures) { Write-Output "FAIL: $failure" }
     exit 1
 }
-Write-Output "PASS: Claude 훅 10건, Codex 콘텐츠 정책·PreToolUse 6건"
+Write-Output "PASS: Claude 훅 13건, Codex 콘텐츠 정책·PreToolUse 6건"
