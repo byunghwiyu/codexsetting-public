@@ -31,7 +31,10 @@ $cases = @(
     @{ Name = '셸 입력'; Tool = 'Bash'; Field = 'command'; Text = 'DROP  TABLE example;'; Expected = 2 },
     @{ Name = 'cmd 입력'; Tool = 'Bash'; Field = 'cmd'; Text = 'DROP TABLE example;'; Expected = 2 },
     @{ Name = '기존 patch 입력'; Field = 'patch'; Text = 'DROP TABLE example;'; Expected = 2 },
-    @{ Name = '잘못된 JSON'; Raw = '{broken'; Expected = 2 }
+    @{ Name = '잘못된 JSON'; Raw = '{broken'; Expected = 2 },
+    @{ Name = 'BOM 정상 입력'; Text = 'task-name'; Bom = $true; Expected = 0 },
+    @{ Name = 'BOM 위험 입력'; Text = 'BEGIN PRIVATE KEY'; Bom = $true; Expected = 2 },
+    @{ Name = '한글 정상 입력'; Text = '한글 설명 문자열'; Expected = 0 }
 )
 
 $failures = @()
@@ -51,7 +54,8 @@ foreach ($case in $cases) {
     $start.RedirectStandardOutput = $true
     $start.RedirectStandardError = $true
     $process = [System.Diagnostics.Process]::Start($start)
-    $bytes = [System.Text.UTF8Encoding]::new($false).GetBytes($payload)
+    # Bom 사례는 UTF-8 BOM을 직접 붙여 호출자 인코딩 차이를 재현한다.
+    $bytes = [System.Text.UTF8Encoding]::new([bool]$case.Bom).GetPreamble() + [System.Text.UTF8Encoding]::new($false).GetBytes($payload)
     $process.StandardInput.BaseStream.Write($bytes, 0, $bytes.Length)
     $process.StandardInput.Close()
     $null = $process.StandardOutput.ReadToEnd()

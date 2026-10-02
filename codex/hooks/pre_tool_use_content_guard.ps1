@@ -1,7 +1,10 @@
 ﻿$ErrorActionPreference = "Stop"
 
 try {
-    $raw = [Console]::In.ReadToEnd()
+    # 콘솔 코드페이지와 무관하게 UTF-8로 읽고, 호출자가 붙인 BOM(U+FEFF)은 제거한다.
+    $buffer = New-Object System.IO.MemoryStream
+    [Console]::OpenStandardInput().CopyTo($buffer)
+    $raw = [System.Text.Encoding]::UTF8.GetString($buffer.ToArray()).TrimStart([char]0xFEFF)
     $event = $raw | ConvertFrom-Json
 }
 catch {
