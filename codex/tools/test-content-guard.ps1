@@ -66,9 +66,40 @@ foreach ($case in $cases) {
     }
     $process.Dispose()
 }
+
+# 손상·빈 정책은 정상 내용도 통과시키지 않는다. 임시 정책 파일로 검사기를 직접 실행한다.
+$scanner = Join-Path $CodexHome 'tools\scan-content-policy.ps1'
+$policyRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('codex-scan-policy-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $policyRoot | Out-Null
+$policyCases = @(
+    @{ Name = '빈 정책'; Body = 'patterns: []' },
+    @{ Name = 'scope 누락 정책'; Body = "patterns:`n  - pattern: `"sk-`"`n    policy: `"scan`"`n    reason: `"example`"" },
+    @{ Name = '정책 파일 없음'; Body = $null }
+)
+foreach ($policyCase in $policyCases) {
+    $policyFile = Join-Path $policyRoot ([guid]::NewGuid().ToString('N') + '.yaml')
+    if ($null -ne $policyCase.Body) { [System.IO.File]::WriteAllText($policyFile, $policyCase.Body) }
+    $start = [System.Diagnostics.ProcessStartInfo]::new()
+    $start.FileName = $powerShellExecutable
+    $start.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "' + $scanner + '" -Content task-name -PolicyPath "' + $policyFile + '"'
+    $start.UseShellExecute = $false
+    $start.CreateNoWindow = $true
+    $start.RedirectStandardOutput = $true
+    $start.RedirectStandardError = $true
+    $process = [System.Diagnostics.Process]::Start($start)
+    $null = $process.StandardOutput.ReadToEnd()
+    $null = $process.StandardError.ReadToEnd()
+    $process.WaitForExit()
+    if ($process.ExitCode -ne 2) {
+        $failures += "$($policyCase.Name): expected=2 actual=$($process.ExitCode)"
+    }
+    $process.Dispose()
+}
+# 임시 정책 폴더는 진단을 위해 보존한다. 자동 삭제하지 않는다.
+
 if ($failures.Count -gt 0) {
     $failures | ForEach-Object { Write-Output "FAIL: $_" }
     exit 1
 }
-Write-Output "PASS: 콘텐츠 가드 $($cases.Count)건"
+Write-Output "PASS: 콘텐츠 가드 $($cases.Count)건, 정책 오류 $($policyCases.Count)건"
 exit 0
