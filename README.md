@@ -1,7 +1,7 @@
 # Codex 공개용 설정
 
 Codex의 작업 지침·정책·훅·설치기를 공유하는 저장소입니다.
-**초기 공개본이며 라이선스는 아직 미정입니다.** 아래 로컬 검증 범위와 알려진 한계를 확인한 뒤 사용 환경에 맞게 검토하세요.
+**초기 공개본이며 [MIT 라이선스](LICENSE)로 배포합니다.** 아래 로컬 검증 범위와 알려진 한계를 확인한 뒤 사용 환경에 맞게 검토하세요.
 
 ## 현재 포함된 파일
 
@@ -23,6 +23,7 @@ Codex의 작업 지침·정책·훅·설치기를 공유하는 저장소입니�
 - [codex/tools/test-global-guards.ps1](codex/tools/test-global-guards.ps1)
 - [codex/tools/test-harness-parity.ps1](codex/tools/test-harness-parity.ps1)
 - [codex/tools/validate-harness-parity.ps1](codex/tools/validate-harness-parity.ps1)
+- [LICENSE](LICENSE)
 - `README.md`: 이 안내
 - [scripts/install-macos.sh](scripts/install-macos.sh)
 - [scripts/install-windows.ps1](scripts/install-windows.ps1)
@@ -151,5 +152,5 @@ Claude만 설치하는 사용자는 생성된 정책을 사용하며, 패턴을 
 
 ## 라이선스와 외부 구성요소
 
-저장소는 공개됐지만 라이선스는 아직 확정하지 않았고 LICENSE 파일도 없습니다. 자체 코드·문서의 사용 허가 조건은 라이선스 결정 후 별도로 고지합니다.
+직접 작성한 코드·문서는 [MIT 라이선스](LICENSE)로 배포합니다. 별도 설치 도구와 외부 구성요소에는 각 배포처의 조건이 적용됩니다.
 포함·제외한 외부 구성은 [외부 구성요소 안내](THIRD_PARTY_NOTICES.md), 보호 범위와 제보 채널 준비 상태는 [보안 안내](SECURITY.md)를 참고합니다.
