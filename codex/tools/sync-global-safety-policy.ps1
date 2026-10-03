@@ -58,6 +58,31 @@ function New-ClaudeJson([object[]]$Patterns) {
     return (ConvertTo-Json -InputObject $document -Depth 20) + "`n"
 }
 
+function Test-JsonValueEqual([object]$Left, [object]$Right) {
+    if ($null -eq $Left -or $null -eq $Right) { return ($null -eq $Left -and $null -eq $Right) }
+    # 객체의 속성 순서는 무시하되 이름의 대소문자와 누락·추가 속성은 구분한다.
+    if ($Left -is [pscustomobject] -and $Right -is [pscustomobject]) {
+        $leftProperties = @($Left.PSObject.Properties)
+        $rightNames = @($Right.PSObject.Properties.Name)
+        if ($leftProperties.Count -ne $rightNames.Count) { return $false }
+        foreach ($property in $leftProperties) {
+            if ($rightNames -cnotcontains $property.Name) { return $false }
+            if (-not (Test-JsonValueEqual $property.Value $Right.PSObject.Properties[$property.Name].Value)) { return $false }
+        }
+        return $true
+    }
+    # 배열 순서는 정책 검사 순서이므로 보존한다. 값의 형식과 문자열 대소문자도 보존한다.
+    if ($Left -is [array] -and $Right -is [array]) {
+        if ($Left.Count -ne $Right.Count) { return $false }
+        for ($index = 0; $index -lt $Left.Count; $index++) {
+            if (-not (Test-JsonValueEqual $Left[$index] $Right[$index])) { return $false }
+        }
+        return $true
+    }
+    if ($Left.GetType() -ne $Right.GetType()) { return $false }
+    return ($Left -ceq $Right)
+}
+
 function Write-Utf8Bom([string]$Path, [string]$Content) {
     [System.IO.File]::WriteAllText($Path, $Content, [System.Text.UTF8Encoding]::new($true))
 }
@@ -102,9 +127,14 @@ if ($Write) {
 }
 elseif ($Check) {
     $currentCodex = (Get-Content -Raw -LiteralPath $CodexTarget -Encoding UTF8).Replace("`r`n", "`n")
-    $currentClaude = (Get-Content -Raw -LiteralPath $ClaudeTarget -Encoding UTF8).Replace("`r`n", "`n")
+    $currentClaude = Get-Content -Raw -LiteralPath $ClaudeTarget -Encoding UTF8
     if ($currentCodex -ne $codexOutput.Replace("`r`n", "`n")) { throw "Codex 안전 정책 드리프트" }
-    if ($currentClaude -ne $claudeOutput.Replace("`r`n", "`n")) { throw "Claude 안전 정책 드리프트" }
+    # 같은 런타임에서 파싱해 들여쓰기·개행·이스케이프 표현 차이만 허용한다.
+    # 루트는 객체여야 한다. PowerShell의 단일 원소 배열 자동 펼침과 빈 파일을 허용하지 않는다.
+    if ($currentClaude -notmatch '^\s*\{') { throw "Claude 안전 정책은 JSON 객체여야 합니다." }
+    $currentDocument = ConvertFrom-Json -InputObject $currentClaude
+    $expectedDocument = ConvertFrom-Json -InputObject $claudeOutput
+    if (-not (Test-JsonValueEqual $currentDocument $expectedDocument)) { throw "Claude 안전 정책 드리프트" }
     Write-Output "PASS: 공통 안전 원본과 플랫폼 산출물 일치"
 }
 else {

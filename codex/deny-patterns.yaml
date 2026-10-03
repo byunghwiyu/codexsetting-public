@@ -108,6 +108,11 @@ patterns:
     scope: "**/*"
     reason: "SQL 내용 검사 대상"
 
+  - pattern: "DROP DATABASE"
+    policy: "scan"
+    scope: "**/*"
+    reason: "데이터베이스 삭제 SQL 검사 대상"
+
   - pattern: "ASPNETCORE_ENVIRONMENT=Production"
     policy: "scan"
     scope: "**/tests/**"
@@ -127,6 +132,21 @@ patterns:
     policy: "scan"
     scope: "**/*"
     reason: "개인키 검사 대상"
+
+  - pattern: "BEGIN RSA PRIVATE KEY"
+    policy: "scan"
+    scope: "**/*"
+    reason: "RSA 개인키 검사 대상"
+
+  - pattern: "BEGIN EC PRIVATE KEY"
+    policy: "scan"
+    scope: "**/*"
+    reason: "EC 개인키 검사 대상"
+
+  - pattern: "BEGIN OPENSSH PRIVATE KEY"
+    policy: "scan"
+    scope: "**/*"
+    reason: "OpenSSH 개인키 검사 대상"
 
   - pattern: "GITHUB_TOKEN="
     policy: "scan"

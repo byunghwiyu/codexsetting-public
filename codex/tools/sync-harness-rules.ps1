@@ -30,7 +30,7 @@ function New-ManagedBlock {
         "- $($common.language)",
         "- $($common.planApproval)",
         "- $($common.destructiveApproval)",
-        "- 1 Phase의 변경 파일은 최대 $($common.phaseMaxFiles)개다.",
+        "- $($common.phaseFileRule)",
         "- $($common.phaseApproval)",
         "- $($common.rubricRange)",
         "- 공통 판정 축: $($common.rubricAxes -join ', ')",
@@ -58,6 +58,38 @@ function Set-ManagedBlock {
 
 $policy = Get-Content -Raw -LiteralPath $Source -Encoding UTF8 | ConvertFrom-Json
 if ($policy.schemaVersion -notin @(1, 2)) { throw "지원하지 않는 하네스 정책 버전: $($policy.schemaVersion)" }
+
+# 잘못된 정책이 빈 문장으로 생성되지 않도록 쓰기 전에 사용 필드를 검증한다.
+foreach ($field in @("language", "planApproval", "destructiveApproval", "phaseFileRule", "phaseApproval", "rubricRange", "completion")) {
+    $value = $policy.common.$field
+    if ($value -isnot [string] -or [string]::IsNullOrWhiteSpace($value)) {
+        throw "정책 필드 오류: common.$field (비어 있지 않은 문자열 필요)"
+    }
+}
+if ($policy.common.rubricAxes -isnot [array] -or $policy.common.rubricAxes.Count -eq 0) {
+    throw "정책 필드 오류: common.rubricAxes (비어 있지 않은 배열 필요)"
+}
+foreach ($axis in $policy.common.rubricAxes) {
+    if ($axis -isnot [string] -or [string]::IsNullOrWhiteSpace($axis)) {
+        throw "정책 필드 오류: common.rubricAxes (비어 있지 않은 문자열 항목 필요)"
+    }
+}
+if ($policy.targets -isnot [array] -or $policy.targets.Count -eq 0) {
+    throw "정책 필드 오류: targets (비어 있지 않은 배열 필요)"
+}
+foreach ($target in $policy.targets) {
+    foreach ($field in @("name", "path")) {
+        if ($target.$field -isnot [string] -or [string]::IsNullOrWhiteSpace($target.$field)) {
+            throw "정책 필드 오류: targets.$field (비어 있지 않은 문자열 필요)"
+        }
+    }
+    if ($target.overrides -isnot [array]) { throw "정책 필드 오류: targets.overrides (배열 필요)" }
+    foreach ($override in $target.overrides) {
+        if ($override -isnot [string] -or [string]::IsNullOrWhiteSpace($override)) {
+            throw "정책 필드 오류: targets.overrides (비어 있지 않은 문자열 항목 필요)"
+        }
+    }
+}
 
 # 일부 대상만 갱신되지 않도록 모든 대상의 결과를 먼저 계산·검증한 뒤 쓴다.
 $plans = @()

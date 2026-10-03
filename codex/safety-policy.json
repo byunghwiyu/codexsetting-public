@@ -189,6 +189,12 @@
                                                                "reason":  "SQL 내용 검사 대상"
                                                            },
                                                            {
+                                                               "pattern":  "DROP DATABASE",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/*",
+                                                               "reason":  "데이터베이스 삭제 SQL 검사 대상"
+                                                           },
+                                                           {
                                                                "pattern":  "ASPNETCORE_ENVIRONMENT=Production",
                                                                "policy":  "scan",
                                                                "scope":  "**/tests/**",
@@ -211,6 +217,24 @@
                                                                "policy":  "scan",
                                                                "scope":  "**/*",
                                                                "reason":  "개인키 검사 대상"
+                                                           },
+                                                           {
+                                                               "pattern":  "BEGIN RSA PRIVATE KEY",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/*",
+                                                               "reason":  "RSA 개인키 검사 대상"
+                                                           },
+                                                           {
+                                                               "pattern":  "BEGIN EC PRIVATE KEY",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/*",
+                                                               "reason":  "EC 개인키 검사 대상"
+                                                           },
+                                                           {
+                                                               "pattern":  "BEGIN OPENSSH PRIVATE KEY",
+                                                               "policy":  "scan",
+                                                               "scope":  "**/*",
+                                                               "reason":  "OpenSSH 개인키 검사 대상"
                                                            },
                                                            {
                                                                "pattern":  "GITHUB_TOKEN=",
@@ -297,7 +321,7 @@
                                                                                "Write",
                                                                                "Edit"
                                                                            ],
-                                                                 "content_regex":  "(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|AIza[0-9A-Za-z_-]{30,}|xox[baprs]-[A-Za-z0-9-]{10,})",
+                                                                 "content_regex":  "(sk-proj-[A-Za-z0-9_-]{20,}|github_pat_[A-Za-z0-9_]{30,}|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{30,}|AIza[0-9A-Za-z_-]{30,}|xox[baprs]-[A-Za-z0-9-]{10,})",
                                                                  "reason":  "API 키/토큰 출력·커밋 금지."
                                                              },
                                                              {

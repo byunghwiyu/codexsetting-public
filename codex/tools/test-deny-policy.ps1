@@ -75,4 +75,43 @@ foreach ($safetyCase in $safetyCases) {
 }
 # 임시 산출물은 진단을 위해 보존한다. 자동 삭제하지 않는다.
 
-Write-Output "PASS: 안전 정책 동기화, 필수 규칙, 책임 분리, 멱등성, 생성기 사전 거부 $($safetyCases.Count)건 확인"
+# 실제 정책은 수정하지 않고, 합성 정책으로 JSON 비교의 허용·거부 경계를 확인한다.
+$jsonSource = Join-Path $safetyRoot 'source.json'
+$jsonPolicy = Get-Content -Raw -LiteralPath $safetySource -Encoding UTF8 | ConvertFrom-Json
+$jsonPolicy.platformPolicies.claude.patterns = @([pscustomobject]@{
+    id = 'alpha'; tools = @('Bash', 'Edit'); command_regex = 'a&b'; reason = '한글'; enabled = $true; note = $null
+})
+[System.IO.File]::WriteAllText($jsonSource, ($jsonPolicy | ConvertTo-Json -Depth 20), [System.Text.UTF8Encoding]::new($false))
+& $safetySync -Source $jsonSource -CodexTarget $firstTarget -ClaudeTarget $secondTarget -Write | Out-Null
+$compact = '{"version":1,"patterns":[{"id":"alpha","tools":["Bash","Edit"],"command_regex":"a&b","reason":"한글","enabled":true,"note":null}]}'
+$jsonCases = @(
+    @{ Name = '압축 JSON'; Body = $compact; Valid = $true },
+    @{ Name = '객체 속성 순서'; Body = '{"patterns":[{"note":null,"enabled":true,"reason":"한글","command_regex":"a&b","tools":["Bash","Edit"],"id":"alpha"}],"version":1}'; Valid = $true },
+    @{ Name = '개행과 유니코드 이스케이프'; Body = ("`r`n  " + $compact.Replace('a&b', 'a\u0026b').Replace('한글', '\ud55c\uae00') + "`r`n"); Valid = $true },
+    @{ Name = '문자열 대소문자 변경'; Body = $compact.Replace('alpha', 'ALPHA'); Valid = $false },
+    @{ Name = '배열 순서 변경'; Body = $compact.Replace('["Bash","Edit"]', '["Edit","Bash"]'); Valid = $false },
+    @{ Name = '숫자를 문자열로 변경'; Body = $compact.Replace('"version":1', '"version":"1"'); Valid = $false },
+    @{ Name = '속성 이름 대소문자 변경'; Body = $compact.Replace('"id":', '"ID":'); Valid = $false },
+    @{ Name = 'null 속성 누락'; Body = $compact.Replace(',"note":null', ''); Valid = $false },
+    @{ Name = '추가 속성'; Body = $compact.Replace('"version":1', '"extra":0,"version":1'); Valid = $false },
+    @{ Name = 'null을 빈 문자열로 변경'; Body = $compact.Replace('"note":null', '"note":""'); Valid = $false },
+    @{ Name = '불리언 변경'; Body = $compact.Replace('true', 'false'); Valid = $false },
+    @{ Name = '손상 JSON'; Body = '{broken'; Valid = $false },
+    @{ Name = 'JSON 뒤 추가 입력'; Body = ($compact + ',"other":0'); Valid = $false },
+    @{ Name = '빈 파일'; Body = ''; Valid = $false },
+    @{ Name = '루트를 배열로 변경'; Body = ('[' + $compact + ']'); Valid = $false }
+)
+$jsonFailures = @()
+foreach ($jsonCase in $jsonCases) {
+    [System.IO.File]::WriteAllText($secondTarget, $jsonCase.Body, [System.Text.UTF8Encoding]::new($false))
+    $beforeHashes = @($jsonSource, $firstTarget, $secondTarget | ForEach-Object { (Get-FileHash -LiteralPath $_).Hash })
+    $accepted = $true
+    try { & $safetySync -Source $jsonSource -CodexTarget $firstTarget -ClaudeTarget $secondTarget -Check | Out-Null }
+    catch { $accepted = $false }
+    $afterHashes = @($jsonSource, $firstTarget, $secondTarget | ForEach-Object { (Get-FileHash -LiteralPath $_).Hash })
+    if (($beforeHashes -join ',') -ne ($afterHashes -join ',')) { throw "Check가 파일을 변경했습니다: $($jsonCase.Name)" }
+    if ($accepted -ne $jsonCase.Valid) { $jsonFailures += $jsonCase.Name }
+}
+if ($jsonFailures.Count -gt 0) { throw "JSON 비교 결과 불일치: $($jsonFailures -join ', ')" }
+
+Write-Output "PASS: 안전 정책 동기화, 필수 규칙, 책임 분리, 멱등성, 생성기 사전 거부 $($safetyCases.Count)건, JSON 비교·Check 무변경 $($jsonCases.Count)건 확인"

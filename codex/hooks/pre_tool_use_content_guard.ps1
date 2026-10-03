@@ -1,4 +1,6 @@
 ﻿$ErrorActionPreference = "Stop"
+# 앱의 셸 래퍼에도 차단 사유를 UTF-8로 전달한다.
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 
 try {
     # 콘솔 코드페이지와 무관하게 UTF-8로 읽고, 호출자가 붙인 BOM(U+FEFF)은 제거한다.

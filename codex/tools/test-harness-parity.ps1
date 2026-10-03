@@ -53,24 +53,66 @@ try {
     [System.IO.File]::WriteAllText($syncFirst, "original")
     $syncManifest = @{
         schemaVersion = 2
-        common = @{ phaseMaxFiles = 5; rubricAxes = @("검증") }
+        common = (Get-Content -Raw -LiteralPath $policy -Encoding UTF8 | ConvertFrom-Json).common
         targets = @(
             @{ name = "First"; path = $syncFirst; overrides = @() },
             @{ name = "Missing"; path = (Join-Path ([System.IO.Path]::GetTempPath()) "harness-parity-$fixtureId-missing\rules.md"); overrides = @() }
         )
-    } | ConvertTo-Json -Depth 8
-    [System.IO.File]::WriteAllText($syncPolicy, $syncManifest, [System.Text.UTF8Encoding]::new($false))
-    # 기대한 실패의 stderr가 Windows PowerShell에서 종료 오류로 바뀌지 않도록 이 호출만 Continue로 실행한다.
-    $ErrorActionPreference = "Continue"
-    & $powerShellExecutable -NoProfile -ExecutionPolicy Bypass -File $syncTool -Source $syncPolicy -Write *> $null
-    $syncExitCode = $LASTEXITCODE
-    $ErrorActionPreference = "Stop"
-    if ($syncExitCode -eq 0) { throw "하네스 동기화가 누락 대상을 거부하지 않았습니다." }
-    if ([System.IO.File]::ReadAllText($syncFirst) -ne "original") { throw "하네스 동기화가 실패 전에 첫 대상을 변경했습니다." }
+    }
+    $syncCases = 0
+    function Assert-SyncFailure {
+        param([object]$Manifest, [string]$ExpectedReason)
+
+        $json = $Manifest | ConvertTo-Json -Depth 12
+        [System.IO.File]::WriteAllText($syncPolicy, $json, [System.Text.UTF8Encoding]::new($false))
+        $before = (Get-FileHash -LiteralPath $syncFirst).Hash
+        # 기대 실패의 stderr 때문에 원래 진단 확인이 생략되지 않도록 이 호출만 Continue로 실행한다.
+        $previousPreference = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = "Continue"
+            $diagnostic = (& $powerShellExecutable -NoProfile -ExecutionPolicy Bypass -File $syncTool -Source $syncPolicy -Write 2>&1 | Out-String)
+            $syncExitCode = $LASTEXITCODE
+        }
+        finally { $ErrorActionPreference = $previousPreference }
+        if ($syncExitCode -eq 0 -or -not $diagnostic.Contains($ExpectedReason)) {
+            throw "동기화 실패 원인 불일치: expected=$ExpectedReason exit=$syncExitCode actual=$diagnostic"
+        }
+        if ((Get-FileHash -LiteralPath $syncFirst).Hash -ne $before) {
+            throw "동기화 실패 전에 첫 대상이 변경됐습니다: $ExpectedReason"
+        }
+        $script:syncCases++
+    }
+
+    Assert-SyncFailure -Manifest $syncManifest -ExpectedReason "동기화 대상이 없습니다:"
+    # 정상 필드를 갖춘 대상 누락 사례와 필드 오류 사례를 분리해 실패 원인을 검증한다.
+    foreach ($field in @("language", "planApproval", "destructiveApproval", "phaseFileRule", "phaseApproval", "rubricRange", "completion")) {
+        foreach ($invalid in @("missing", "blank", "type")) {
+            $invalidManifest = $syncManifest | ConvertTo-Json -Depth 12 | ConvertFrom-Json
+            switch ($invalid) {
+                "missing" { $invalidManifest.common.PSObject.Properties.Remove($field) }
+                "blank" { $invalidManifest.common.$field = " " }
+                "type" { $invalidManifest.common.$field = 5 }
+            }
+            Assert-SyncFailure -Manifest $invalidManifest -ExpectedReason "common.$field"
+        }
+    }
+    foreach ($invalidAxes in @(@{ value = @() }, @{ value = "검증" }, @{ value = @(" ") }, @{ value = @(5) })) {
+        $invalidManifest = $syncManifest | ConvertTo-Json -Depth 12 | ConvertFrom-Json
+        $invalidManifest.common.rubricAxes = $invalidAxes.value
+        Assert-SyncFailure -Manifest $invalidManifest -ExpectedReason "common.rubricAxes"
+    }
+    $invalidManifest = $syncManifest | ConvertTo-Json -Depth 12 | ConvertFrom-Json
+    $invalidManifest.targets = @()
+    Assert-SyncFailure -Manifest $invalidManifest -ExpectedReason "targets"
+    foreach ($field in @("name", "path", "overrides")) {
+        $invalidManifest = $syncManifest | ConvertTo-Json -Depth 12 | ConvertFrom-Json
+        $invalidManifest.targets[1].PSObject.Properties.Remove($field)
+        Assert-SyncFailure -Manifest $invalidManifest -ExpectedReason "targets.$field"
+    }
 }
 finally {
     Remove-Item -LiteralPath $fixtureFile, $fixturePolicy -Force -ErrorAction SilentlyContinue
     if ($syncFirst) { Remove-Item -LiteralPath $syncFirst, $syncPolicy -Force -ErrorAction SilentlyContinue }
 }
 
-Write-Output "PASS: 현재 필수 capability, 누락 감지·manifest 유효성 $($manifestCases.Count)건, 동기화 사전 거부 fixture"
+Write-Output "PASS: 현재 필수 capability, 누락 감지·manifest 유효성 $($manifestCases.Count)건, 동기화 실패 원인·무변경 $syncCases 건"
